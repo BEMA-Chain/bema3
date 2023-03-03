@@ -93,6 +93,49 @@ contract Bema is ReentrancyGuard {
             );
         }
         
+      function searchMarketItems(string memory keyword) public view returns (MarketItem[] memory) {
+    uint itemCount = _itemIds.current();
+    uint unsoldItemCount = _itemIds.current() - _itemsSold.current();
+    uint currentIndex = 0;
+
+    MarketItem[] memory items = new MarketItem[](unsoldItemCount);
+    for (uint i = 0; i < itemCount; i++) {
+        if (idToMarketItem[i + 1].owner == address(0)) {
+            uint currentId = i + 1;
+            MarketItem storage currentItem = idToMarketItem[currentId];
+            if (contains(currentItem.tokenId, keyword) || contains(addressToString(currentItem.seller), keyword)) {
+                items[currentIndex] = currentItem;
+                currentIndex += 1;
+            }
+        }
+    }
+    return items;
+}
+
+function contains(string memory haystack, string memory needle) private pure returns (bool) {
+    bytes memory h = bytes(haystack);
+    bytes memory n = bytes(needle);
+    if (h.length < n.length) return false;
+    for (uint i = 0; i <= h.length - n.length; i++) {
+        bool found = true;
+        for (uint j = 0; j < n.length; j++) {
+            if (h[i + j] != n[j]) {
+                found = false;
+                break;
+            }
+        }
+        if (found) return true;
+    }
+    return false;
+}
+
+function addressToString(address x) private pure returns (string memory) {
+    bytes memory b = new bytes(20);
+    for (uint i = 0; i < 20; i++)
+        b[i] = byte(uint8(uint(x) / (2**(8*(19 - i)))));
+    return string(b);
+}
+    
     function createMarketSale(
         //address nftContract,
         uint256 itemId
