@@ -136,6 +136,28 @@ function addressToString(address x) private pure returns (string memory) {
     return string(b);
 }
     
+    enum Filter { All, Owned, NotOwned }
+
+function fetchMarketItems(Filter filter) public view returns (MarketItem[] memory) {
+    uint itemCount = _itemIds.current();
+    uint currentIndex = 0;
+
+    MarketItem[] memory items = new MarketItem[](itemCount);
+    for (uint i = 0; i < itemCount; i++) {
+        uint currentId = i + 1;
+        MarketItem storage currentItem = idToMarketItem[currentId];
+        bool owned = currentItem.owner == msg.sender;
+        if ((filter == Filter.All) ||
+            (filter == Filter.Owned && owned) ||
+            (filter == Filter.NotOwned && !owned)) {
+            items[currentIndex] = currentItem;
+            currentIndex += 1;
+        }
+    }
+    return items;
+}
+
+    
     function createMarketSale(
         //address nftContract,
         uint256 itemId
